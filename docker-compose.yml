@@ -31,7 +31,7 @@ services:
     environment:
       - LD_PRELOAD=/usr/lib/libmimalloc-secure.so.2
     volumes:
-      - ./config:/cfg:ro
+      - ./config:/cfg
       - /mnt/encrypted/data:/w
     cap_add:
       - CHOWN
@@ -40,7 +40,7 @@ services:
       - SETUID
       - SETGID
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider -q 127.0.0.1:3923/?reset=/._"]
+      test: ["CMD-SHELL", "wget --spider -q 127.0.0.1:3939/?reset=/._"]
       interval: 1m
       timeout: 2s
       retries: 5
@@ -94,3 +94,4 @@ services:
           memory: 32M
 
     logging: *default-logging
+
