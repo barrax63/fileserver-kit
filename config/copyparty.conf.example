@@ -10,7 +10,7 @@
 
   # q, lo: /cfg/log/%Y-%m%d.log   # log to file instead of docker
 
-  p: 3939            # listen on another port
+  p: 3923            # listen on another port
   # ipa: 10.89.      # only allow connections from 10.89.*
   df: 16             # stop accepting uploads if less than 16 GB free disk space
   ver                # show copyparty version in the controlpanel
