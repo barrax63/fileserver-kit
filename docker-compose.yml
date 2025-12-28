@@ -3,9 +3,6 @@ name: fileserver-kit
 networks:
   main:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 10.254.9.0/24
 
 x-logging: &default-logging
   driver: "json-file"
@@ -94,5 +91,6 @@ services:
           memory: 32M
 
     logging: *default-logging
+
 
 
