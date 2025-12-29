@@ -29,7 +29,7 @@ services:
       - LD_PRELOAD=/usr/lib/libmimalloc-secure.so.2
     volumes:
       - ./config:/cfg
-      - /mnt/encrypted/data:/w
+      - /mnt/hdd:/w
     cap_add:
       - CHOWN
       - FOWNER
@@ -91,6 +91,7 @@ services:
           memory: 32M
 
     logging: *default-logging
+
 
 
 
