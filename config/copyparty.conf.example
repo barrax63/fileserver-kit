@@ -20,6 +20,12 @@
   # stats, nos-dup   # enable the prometheus endpoint, but disable the dupes counter (too slow)
   # no-robots, force-js  # make it harder for search engines to read your server
 
+  # Proxy settings
+  xff-hdr: x-forwarded-for
+  xff-src: lan
+  rproxy: 1
+  xf-proto: x-forwarded-proto
+  xf-host: x-forwarded-host
 
 [accounts]
   ed: wark  # username: password
