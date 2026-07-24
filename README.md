@@ -15,10 +15,10 @@ This Docker setup provides a production-ready Copyparty deployment, optimized fo
 
 ## Directory Structure
 
-```
+```text
 .
 ├── docker-compose.yml            # Service orchestration
-├── .env                          # Varialbe configuration
+├── .env                          # Variable configuration (e.g. NGINX_PORT)
 ├── config/
 │   ├── copyparty.conf.example    # Copyparty configuration (adjust this!)
 ├── nginx/
@@ -64,6 +64,25 @@ mv copyparty.conf.example copyparty.conf
 vi copyparty.conf
 ```
 
+**Important:** `copyparty.conf.example` ships with a placeholder
+`admin: CHANGE_ME_TO_A_STRONG_PASSWORD` account. Replace this with a real
+username and a strong, unique password before exposing the service to
+your network.
+
+### 3b. (Optional) Change the published port
+
+By default `docker-compose.yml` publishes nginx's port 8443. `.env`
+already overrides this to `NGINX_PORT=4098`, i.e. the service is reachable
+on **host port 4098** unless you change `.env`:
+
+```bash
+# .env
+NGINX_PORT=4098
+```
+
+Adjust `NGINX_PORT` in `.env` to whichever host port you want to expose
+(no `docker-compose.yml` changes needed).
+
 ### 4. Start the services
 
 ```bash
@@ -76,15 +95,31 @@ docker compose logs -f nginx
 
 ### 5. Access the service
 
-Open in browser: `https://.fritz.box:5096`
+Open in browser: `https://<your-host>:4098` (replace `<your-host>` with
+the IP/hostname of the machine running the stack, e.g.
+`https://copyparty.fritz.box:4098` if you used the example certificate
+`CN`/SAN and `4098` if you kept the default `NGINX_PORT` from `.env`;
+see step 3b above if you changed the port).
+
+Since the certificate is self-signed, your browser will show a security
+warning on first visit — this is expected.
 
 ## Maintenance
 
 ### Update
 
+The images are pinned to specific versions in `docker-compose.yml`
+(`copyparty/ac:<version>`, `nginxinc/nginx-unprivileged:<version>`)
+rather than `:latest`, so updates are a deliberate two-step process:
+
 ```bash
 git pull
-docker compose up -d --pull always
+
+# Bump the image tags in docker-compose.yml to the versions you want
+# (check https://hub.docker.com/r/copyparty/ac/tags and
+# https://hub.docker.com/r/nginxinc/nginx-unprivileged/tags), then:
+docker compose pull
+docker compose up -d
 ```
 
 ### Restart
@@ -106,10 +141,15 @@ docker compose logs -f nginx
 
 ## Security Considerations
 
-1. **Dropped Capabilities**: Services use `cap_drop: [ALL]` by default; only required capabilities are re-added.
+1. **Dropped Capabilities**: Services use `cap_drop: [ALL]` by default; only the specific capabilities each service actually needs are re-added (see comments in `docker-compose.yml`). nginx needs none at all, since it runs as a fixed non-root user via the `nginxinc/nginx-unprivileged` image.
 2. **AppArmor**: Default Docker AppArmor profile is enforced.
 3. **No New Privileges**: Prevents privilege escalation in all containers.
-4. **Immutable Config**: copyparty and nginx configurations are mounted read-only.
-5. **Resource Limits**: CPU/memory limits and reservations are set for all services.
-6. **TLS 1.2/1.3**: Modern TLS protocols with secure cipher suites.
-7. **Security Headers**: X-Frame-Options, X-Content-Type-Options, HSTS enabled.
+4. **Non-root containers**: copyparty runs as uid `1000`, nginx runs as uid `101` (unprivileged nginx image) — neither container ever runs as root.
+5. **Read-only root filesystem**: Both containers run with `read_only: true`; the only writable paths are explicit `tmpfs` mounts (`/tmp`) and the bind-mounted data/config volumes.
+6. **Config/certs mounted read-only**: nginx's `nginx.conf` and TLS certs are mounted `:ro`. The copyparty `./config:/cfg` mount is intentionally writable — copyparty persists an auto-generated security salt there (see comment in `docker-compose.yml`); making it read-only would invalidate shared links on every restart.
+7. **Pinned image versions**: Both images are pinned to a specific version tag instead of `:latest`, so upgrades are deliberate and reproducible.
+8. **Resource Limits**: CPU/memory limits and reservations are set for all services.
+9. **TLS 1.2/1.3**: Modern TLS protocols with secure cipher suites.
+10. **Security Headers**: X-Frame-Options, X-Content-Type-Options, HSTS enabled.
+11. **Rate & connection limiting**: nginx limits requests/sec and concurrent connections per client IP.
+12. **Change default credentials**: `config/copyparty.conf.example` ships with a placeholder account (`admin` / `CHANGE_ME_TO_A_STRONG_PASSWORD`) — always replace it before deploying.

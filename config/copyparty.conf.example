@@ -28,11 +28,15 @@
   xf-host: x-forwarded-host
 
 [accounts]
-  ed: wark  # username: password
+  # CHANGE THIS before deploying! This is a placeholder account with a
+  # weak, publicly-known password. Pick a real username and a long,
+  # unique password (or use `--ah-alg argon2` / hashed passwords, see
+  # https://github.com/9001/copyparty#account-passwords).
+  admin: CHANGE_ME_TO_A_STRONG_PASSWORD  # username: password
 
 
-[/]            # create a volume at "/" (the webroot), which will
-  /w           # share /w (the docker data volume)
+[/]              # create a volume at "/" (the webroot), which will
+  /w             # share /w (the docker data volume)
   accs:
-    rw: *      # everyone gets read-write access, but
-    rwmda: ed  # the user "ed" gets read-write-move-delete-admin
+    rw: *        # everyone gets read-write access, but
+    rwmda: admin # the user "admin" gets read-write-move-delete-admin
