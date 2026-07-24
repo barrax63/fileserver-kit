@@ -108,16 +108,12 @@ warning on first visit — this is expected.
 
 ### Update
 
-The images are pinned to specific versions in `docker-compose.yml`
-(`copyparty/ac:<version>`, `nginxinc/nginx-unprivileged:<version>`)
-rather than `:latest`, so updates are a deliberate two-step process:
+The images track rolling tags (`copyparty/ac:latest`,
+`nginxinc/nginx-unprivileged:stable-alpine`), so updating pulls the
+newest build:
 
 ```bash
 git pull
-
-# Bump the image tags in docker-compose.yml to the versions you want
-# (check https://hub.docker.com/r/copyparty/ac/tags and
-# https://hub.docker.com/r/nginxinc/nginx-unprivileged/tags), then:
 docker compose pull
 docker compose up -d
 ```
@@ -147,9 +143,8 @@ docker compose logs -f nginx
 4. **Non-root containers**: copyparty runs as uid `1000`, nginx runs as uid `101` (unprivileged nginx image) — neither container ever runs as root.
 5. **Read-only root filesystem**: Both containers run with `read_only: true`; the only writable paths are explicit `tmpfs` mounts (`/tmp`) and the bind-mounted data/config volumes.
 6. **Config/certs mounted read-only**: nginx's `nginx.conf` and TLS certs are mounted `:ro`. The copyparty `./config:/cfg` mount is intentionally writable — copyparty persists an auto-generated security salt there (see comment in `docker-compose.yml`); making it read-only would invalidate shared links on every restart.
-7. **Pinned image versions**: Both images are pinned to a specific version tag instead of `:latest`, so upgrades are deliberate and reproducible.
-8. **Resource Limits**: CPU/memory limits and reservations are set for all services.
-9. **TLS 1.2/1.3**: Modern TLS protocols with secure cipher suites.
-10. **Security Headers**: X-Frame-Options, X-Content-Type-Options, HSTS enabled.
-11. **Rate & connection limiting**: nginx limits requests/sec and concurrent connections per client IP.
-12. **Change default credentials**: `config/copyparty.conf.example` ships with a placeholder account (`admin` / `CHANGE_ME_TO_A_STRONG_PASSWORD`) — always replace it before deploying.
+7. **Resource Limits**: CPU/memory limits and reservations are set for all services.
+8. **TLS 1.2/1.3**: Modern TLS protocols with secure cipher suites.
+9. **Security Headers**: X-Frame-Options, X-Content-Type-Options, HSTS enabled.
+10. **Rate & connection limiting**: nginx limits requests/sec and concurrent connections per client IP.
+11. **Change default credentials**: `config/copyparty.conf.example` ships with a placeholder account (`admin` / `CHANGE_ME_TO_A_STRONG_PASSWORD`) — always replace it before deploying.
