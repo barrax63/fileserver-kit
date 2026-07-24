@@ -137,10 +137,10 @@ docker compose logs -f nginx
 
 ## Security Considerations
 
-1. **Dropped Capabilities**: Services use `cap_drop: [ALL]` by default; only the specific capabilities each service actually needs are re-added (see comments in `docker-compose.yml`). nginx needs none at all, since it runs as a fixed non-root user via the `nginxinc/nginx-unprivileged` image.
+1. **Dropped Capabilities**: Services use `cap_drop: [ALL]` by default; only the specific capabilities each service actually needs are re-added (see comments in `docker-compose.yml`).
 2. **AppArmor**: Default Docker AppArmor profile is enforced.
 3. **No New Privileges**: Prevents privilege escalation in all containers.
-4. **Non-root containers**: copyparty runs as uid `1000`, nginx runs as uid `101` (unprivileged nginx image) — neither container ever runs as root.
+4. **Least-privilege workers**: copyparty runs as uid `1000`. nginx's master process starts as root (with only `CHOWN`/`SETUID`/`SETGID` capabilities) but drops its worker processes to the unprivileged `nginx` user.
 5. **Read-only root filesystem**: Both containers run with `read_only: true`; the only writable paths are explicit `tmpfs` mounts (`/tmp`) and the bind-mounted data/config volumes.
 6. **Config/certs mounted read-only**: nginx's `nginx.conf` and TLS certs are mounted `:ro`. The copyparty `./config:/cfg` mount is intentionally writable — copyparty persists an auto-generated security salt there (see comment in `docker-compose.yml`); making it read-only would invalidate shared links on every restart.
 7. **Resource Limits**: CPU/memory limits and reservations are set for all services.

@@ -1,2 +1,6 @@
 nginx/certs/server.crt
 nginx/certs/server.key
+
+# copyparty runtime state (auto-generated salts, session db, default cert)
+config/copyparty/
+config/copyparty.conf

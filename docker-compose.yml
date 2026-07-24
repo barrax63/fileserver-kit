@@ -75,23 +75,29 @@ services:
 
   nginx:
     <<: *security-baseline
-    # Unprivileged variant of the official image: the master process runs
-    # as uid 101 from the start (no root startup + setuid drop), which
-    # means no capabilities need to be added at all - listen port 8443 is
-    # >1024 so CAP_NET_BIND_SERVICE isn't required either.
-    image: nginxinc/nginx-unprivileged:stable-alpine
+    image: nginx:stable-alpine
     hostname: nginx
     networks: ['main']
     ports:
       - "${NGINX_PORT:-8443}:8443"
     restart: unless-stopped
     init: true
-    user: "101:101"
     read_only: true
     tmpfs:
       # nginx.conf points pid/client-body/proxy/fastcgi/uwsgi/scgi temp
       # paths at /tmp (see nginx/nginx.conf); logs go to stdout/stderr.
+      # Worker processes run as the "nginx" user (uid 101) after the root
+      # master forks them; uid 101 owns /tmp so they can write temp files.
       - /tmp:size=64m,mode=1777,uid=101,gid=101
+    cap_add:
+      # The master process starts as root, then setuid()s worker processes
+      # to the unprivileged "nginx" user (see `user nginx;` in nginx.conf),
+      # which requires SETUID/SETGID; CHOWN lets it fix ownership on the
+      # worker temp/cache dirs. Port 8443 is >1024 so NET_BIND_SERVICE is
+      # not needed.
+      - CHOWN
+      - SETUID
+      - SETGID
     environment:
       - TZ=Europe/Berlin
     volumes:
