@@ -38,5 +38,23 @@
 [/]              # create a volume at "/" (the webroot), which will
   /w             # share /w (the docker data volume)
   accs:
-    rw: *        # everyone gets read-write access, but
-    rwmda: admin # the user "admin" gets read-write-move-delete-admin
+    # No "*" entry, so nothing is accessible without logging in. Adding
+    # one (e.g. "r: *") opens the volume to anonymous visitors.
+    rw: @acct     # every logged-in account gets read-write access, and
+    rwmda: admin  # the user "admin" gets read-write-move-delete-admin
+
+
+# To limit an account to a single folder, add it under [accounts] and give
+# the folder its own volume, like the commented-out example below ("guest"
+# may only use /w/guest, which it sees as /guest). Access is per volume and
+# not inherited, so:
+#  * an account that is not listed in a volume's accs cannot open it, and
+#  * "@acct" matches every account -- replace "rw: @acct" above with the
+#    accounts that may see everything (e.g. "rw: alice, bob"), otherwise
+#    the restricted account gets the whole webroot as well.
+#
+# [/guest]          # the URL of the folder, and
+#   /w/guest        # its location on the docker data volume
+#   accs:
+#     rw: guest     # "guest" gets read-write access to this folder only
+#     rwmda: admin  # access is not inherited, so list "admin" again

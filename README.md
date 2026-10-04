@@ -69,6 +69,12 @@ vi copyparty.conf
 username and a strong, unique password before exposing the service to
 your network.
 
+The example only grants access to logged-in accounts. Add one
+`name: password` line per person under `[accounts]`; copyparty's login
+asks for the password alone, so each account needs its own. To limit an
+account to a single folder, see the commented-out volume at the end of
+the example.
+
 ### 3b. (Optional) Change the published port
 
 By default `docker-compose.yml` publishes nginx's port 8443. `.env`
@@ -109,13 +115,20 @@ warning on first visit — this is expected.
 ### Update
 
 The images track rolling tags (`copyparty/ac:latest`,
-`nginxinc/nginx-unprivileged:stable-alpine`), so updating pulls the
-newest build:
+`nginx:stable-alpine`), so updating pulls the newest build:
 
 ```bash
 git pull
 docker compose pull
 docker compose up -d
+```
+
+`docker compose up -d` only recreates containers whose image or service
+definition changed. If the update changed `nginx/nginx.conf`, restart
+nginx so it loads the new configuration:
+
+```bash
+docker compose restart nginx
 ```
 
 ### Restart
