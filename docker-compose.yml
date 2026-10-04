@@ -125,6 +125,51 @@ services:
 
     logging: *default-logging
 
+  cloudflared:
+    <<: *security-baseline
+    image: cloudflare/cloudflared:latest
+    # Optional: only part of the stack when the "cloudflared" profile is
+    # enabled (COMPOSE_PROFILES=cloudflared or --profile cloudflared, see
+    # README). Without it, the stack is reachable on the LAN only.
+    profiles: ['cloudflared']
+    hostname: cloudflared
+    networks: ['main']
+    restart: unless-stopped
+    init: true
+    read_only: true
+    # No published ports and no added capabilities: cloudflared only dials
+    # out to Cloudflare's edge and relays incoming requests to nginx's
+    # internal tunnel listener (http://nginx:8080 -- configured as the
+    # tunnel's service URL in the Cloudflare dashboard, see README). The
+    # image already runs as an unprivileged user (uid 65532).
+    # --metrics pins the readiness endpoint queried by the healthcheck below
+    # to a known loopback port (not reachable from other containers).
+    command: tunnel --metrics 127.0.0.1:2000 run
+    env_file:
+      # Provides TUNNEL_TOKEN. Lives in its own gitignored file instead of
+      # .env, because .env is committed to the repository.
+      - ./cloudflared/tunnel.env
+    depends_on:
+      nginx:
+        condition: service_healthy
+    healthcheck:
+      # Passes once at least one connection to Cloudflare's edge is up.
+      test: ["CMD", "cloudflared", "tunnel", "--metrics", "127.0.0.1:2000", "ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    stop_grace_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    logging: *default-logging
+
 
 
 
